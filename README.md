@@ -32,7 +32,6 @@ Para evitar la exposición de credenciales y llaves de API en el control de vers
 1. **`.gitignore` Global:** Bloquea automáticamente archivos críticos que nunca deben subir al repositorio:
    - `**/catalyst-config.json` (Configuración de funciones y llaves de entorno).
    - `.env` / `.env.local`
-   - `**/vectors.json` (Índices de bases de datos vectoriales).
    - `Estructura en Catalyst/` (Exportaciones de infraestructura/IaC).
    - `.catalystrc` (Identificadores locales de organización).
 2. **Archivos `.example`:** Cada función incluye un `catalyst-config.json.example`. **Debes copiarlo y renombrarlo a `catalyst-config.json`** para colocar tus credenciales reales localmente.
