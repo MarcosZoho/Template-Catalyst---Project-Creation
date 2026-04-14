@@ -1,0 +1,22 @@
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+.env*.local
+
+# Function configs contain API keys — never commit
+functions/**/catalyst-config.json
+
+# Dependencies
+node_modules
+dist
+coverage
+.catalystrc
+
+# IDE files
+.vscode
+.vscode/*
+.idea/
+*.swp
+*.swo
