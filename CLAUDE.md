@@ -23,7 +23,7 @@ El agente debe operar y sugerir soluciones basadas estrictamente en los entornos
 ## 🛡️ Seguridad y Secretos
 
 1. **Configuración de Funciones:** El agente debe buscar siempre archivos `catalyst-config.json.example` para entender la estructura de configuración requerida sin leer secretos reales.
-2. **Prohibición de Commits:** El agente tiene estrictamente prohibido sugerir comandos `git add` que incluyan archivos `catalyst-config.json`, `.env`, `.catalystrc` o `vectors.json`.
+2. **Prohibición de Commits:** El agente tiene estrictamente prohibido sugerir comandos `git add` que incluyan archivos `catalyst-config.json`, `.env` o `.catalystrc`.
 3. **Inyección de Variables:** Al detectar una nueva función, el agente debe generar automáticamente un archivo `.example` con las llaves necesarias para que el humano las complete.
 
 ## 📋 Protocolo de Inicialización (Memory Bank)
