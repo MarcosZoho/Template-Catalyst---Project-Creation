@@ -8,6 +8,9 @@
 # Function configs contain API keys — never commit
 functions/**/catalyst-config.json
 
+# Catalyst CLI — project init generates this directory with org/project IDs
+.catalyst/
+
 # Dependencies
 node_modules
 dist

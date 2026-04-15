@@ -14,11 +14,12 @@ El agente debe operar y sugerir soluciones basadas estrictamente en los entornos
 
 ## 🏗️ Reglas de Arquitectura e Inmutabilidad
 
-1. **Inmutabilidad de CLAUDE.md:** El agente tiene **PROHIBIDO** modificar este archivo una vez finalizada la fase de inicialización. Sirve como la fuente de verdad de las reglas de negocio y limitaciones.
+1. **Inmutabilidad de CLAUDE.md:** El agente tiene **PROHIBIDO** modificar este archivo una vez finalizada la fase de inicialización. Sirve como la fuente de verdad de las reglas de negocio y limitaciones. **CLAUDE.md no es un archivo de memoria comprimible — queda explícitamente excluido como target de `caveman-compress` o cualquier herramienta de reescritura automática.**
 2. **CLI Compliance:** El agente solo gestiona recursos mediante comandos `catalyst` (Functions, Client, Mobile, AppLogic).
 3. **Manual Blueprints:** Para recursos no gestionables vía CLI (QuickML, Circuits, Authentication, API Gateway rules), el agente **DEBE** generar una especificación técnica en `/architecture/manual_config.md` para su implementación manual en la consola web.
 4. **Skills System:** Ubicadas en `/skills/`. Son módulos independientes (ej. frontend, validadores, integraciones de terceros). El agente consume sus interfaces pero no altera su lógica interna a menos que sea explícitamente requerido.
 5. **Zero Inference:** No asumir el dominio del proyecto (industria o cliente) hasta que el humano lo defina en la fase de planificación.
+6. **Prohibición de Edición en Consola:** Queda prohibida la edición manual de código en la consola web de Catalyst para mantener la integridad con el repositorio de GitHub. Toda modificación debe originarse en el repositorio local.
 
 ## 🛡️ Seguridad y Secretos
 
@@ -33,6 +34,28 @@ Antes de escribir código, el agente debe validar/crear los siguientes archivos 
 - `productContext.md`: Define el "qué" y "por qué" del proyecto actual.
 - `progress.md`: Checklist de recursos desplegados y pendientes (CLI vs Manual).
 - `activeContext.md`: Estado del runtime seleccionado, entorno (Dev/Prod) y configuración de `catalyst.json`.
+
+## 🗄️ Infraestructura y Preconfiguración (Data Store)
+
+Antes del despliegue, garantizar la existencia de las siguientes tablas en el Data Store (configuración manual en consola web):
+
+| Tabla                   | Propósito                                                                                    |
+| :---------------------- | :------------------------------------------------------------------------------------------- |
+| **`AppData`**           | Almacena registros generados por el Seeder. Columnas: `reference_code`, `status`, `metadata`. |
+| **`SystemLogs`**        | Auditoría y seguimiento de eventos. Columnas: `event_type`, `payload`.                       |
+| **`PushSubscriptions`** | Registro de tokens para notificaciones push. Columnas: `user_id`, `device_token`, `platform`. |
+
+- **Autenticación:** Uso obligatorio de **Native Catalyst Authentication** para todos los módulos que requieran identidad de usuario.
+- **Seguridad:** Configurar `security-rules.json` para proteger funciones y servicios Zia de accesos no autenticados.
+
+## ⚙️ Lógica de Módulos Core
+
+Comportamientos predefinidos que el agente debe respetar al implementar o modificar estos módulos:
+
+- **Cron Seeder:** Genera 3–8 registros aleatorios diariamente en `AppData`. Al alcanzar 200 registros, detener permanentemente y enviar Push Notification al administrador. Usar Cache para validación de "corto circuito".
+- **Zia OCR:** Invocación desde el cliente mediante funciones de integración. No implementar lógica OCR directamente en funciones `advancedio`.
+- **ConvoKraft Bot:** Toda la lógica de intents y handlers se gestiona exclusivamente vía CLI desde el repositorio. **No modificar el script en la consola web de Catalyst.**
+- **Servicios Asíncronos:** Usar SmartBrowz para generación de PDFs y capturas de pantalla. Usar Job Scheduling para tareas de larga duración que bloquearían funciones básicas.
 
 ## 📂 Estructura de Archivos Estándar
 
@@ -56,13 +79,14 @@ Antes de escribir código, el agente debe validar/crear los siguientes archivos 
   feat:, fix:, chore:, docs:, refactor:.
 - Nomenclatura: Variables, funciones y fragmentos de código SIEMPRE en Inglés.
 - Comunicación: Explicaciones, sugerencias y resolución de dudas SIEMPRE en Español.
+- Agnosticismo: No inferir el dominio, industria o cliente destino del proyecto hasta que el humano lo defina en la fase de planificación.
 
 ## 🚦 Flujo de Trabajo del Agente
 
 - Planificación: Preguntar por Dominio, Runtime y Recursos necesarios.
 - Aprobación: Esperar validación humana de la arquitectura propuesta.
 - Ejecución: Generar código en /functions y archivos locales.
-- Documentación de Consola: Entregar guías paso a paso para lo que no se puede hacer por CLI.
+- Documentación de Consola: Entregar guías paso a paso para lo que no se puede hacer por CLI. **Nunca editar código directamente en la consola web de Catalyst** — toda modificación debe originarse en el repositorio.
 
 ## 📂 Estructura Interna de una Función
 

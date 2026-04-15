@@ -37,6 +37,11 @@ Para evitar la exposición de credenciales y llaves de API en el control de vers
 2. **Archivos `.example`:** Cada función incluye un `catalyst-config.json.example`. **Debes copiarlo y renombrarlo a `catalyst-config.json`** para colocar tus credenciales reales localmente.
 3. **Validación de Agente:** El agente de IA tiene prohibido sugerir comandos `git add` que incluyan archivos de configuración real.
 
+### 🔐 Autenticación en Runtime
+
+- **Autenticación Nativa:** El uso de **Native Catalyst Authentication** es obligatorio para acceder a los módulos de gestión y visualización de datos.
+- **Security Rules:** Se deben configurar reglas de seguridad para restringir el acceso a los endpoints de Zia y la escritura en tablas críticas únicamente a usuarios autenticados.
+
 ## 🤖 Protocolo para Agentes de IA (Memory Bank)
 
 Esta plantilla está optimizada para ser gestionada por un agente de IA bajo reglas estrictas de persistencia:
@@ -45,6 +50,49 @@ Esta plantilla está optimizada para ser gestionada por un agente de IA bajo reg
 2. **Fase de Planificación:** Antes de escribir código, el agente debe completar los archivos en `/architecture/` para definir el dominio, objetivos y el stack tecnológico.
 3. **Uso de Skills:** Las habilidades en `/skills/` son módulos aislados. El agente consume sus interfaces pero no altera su lógica interna, permitiendo que el humano inyecte componentes de frontend o utilidades sin interferencias.
 4. **Manual Blueprints:** Para servicios que no se crean por CLI (como la configuración visual de **Circuits** o modelos de **QuickML**), el agente debe generar la especificación técnica exacta en `manual_config.md`.
+
+## 📊 Preconfiguración del Data Store
+
+Para que la lógica de la plantilla sea funcional desde el primer despliegue, es obligatorio crear las siguientes tablas en el **Data Store** de Catalyst antes de ejecutar cualquier función.
+
+| Tabla                   | Columna          | Tipo de Dato  | Descripción                                          |
+| :---------------------- | :--------------- | :------------ | :--------------------------------------------------- |
+| **AppData**             | `reference_code` | VarChar (100) | Identificador único del registro.                    |
+|                         | `status`         | VarChar (50)  | Estado del registro (Active, Processed).             |
+|                         | `metadata`       | JSON          | Almacenamiento flexible de metadatos.                |
+| **SystemLogs**          | `event_type`     | VarChar (50)  | Categoría del evento (CRON, OCR, AUTH).              |
+|                         | `payload`        | Text          | Detalle técnico o traza de error.                    |
+| **PushSubscriptions**   | `user_id`        | VarChar (100) | Relación con el usuario autenticado.                 |
+|                         | `device_token`   | Text          | Token de registro para notificaciones push.          |
+|                         | `platform`       | VarChar (20)  | Plataforma del dispositivo: Web / iOS / Android.     |
+
+> Estas tablas se crean manualmente en la Consola de Catalyst → Data Store → Add Table. Ver `architecture/manual_config.md` para la guía detallada.
+
+## ⚙️ Lógica de Automatización y Servicios
+
+### 1. Data Seeder (Cron Job)
+
+- **Frecuencia:** Ejecución diaria.
+- **Comportamiento:** Genera entre **3 y 8 registros aleatorios** por día en la tabla `AppData`.
+- **Límite:** Al alcanzar **200 registros**, la función se detiene permanentemente.
+- **Notificación:** Envía una **Push Notification** al administrador inmediatamente al detectar que se alcanzó el límite de 200 registros.
+- **Optimización:** Implementar una bandera en **Cache** para validación de "corto circuito" y evitar el costo de conteo en cada ejecución.
+
+### 2. Optical Character Recognition (Zia OCR)
+
+- **Implementación:** Módulo integrado en el cliente (Frontend).
+- **Flujo:** Carga de imagen → Llamada a `Basic Function` → Procesamiento con Zia → Retorno de JSON estructurado.
+
+### 3. ConvoKraft Bot
+
+- **Nombre preconfigurado:** `MasterAssistantBot`
+- **Gestión:** Configuración de _intents_ y handlers gestionada íntegramente desde el repositorio en `/functions`.
+- **Regla:** Queda prohibida la edición directa del código en la consola web de Catalyst para evitar desincronización con el control de versiones.
+
+### 4. SmartBrowz & Job Scheduling
+
+- **SmartBrowz:** Configuración para generación de PDFs y capturas de pantalla de los datos procesados.
+- **Job Scheduling:** Gestión de tareas asíncronas de larga duración para evitar bloqueos en las funciones básicas.
 
 ## 🚀 Inicio Rápido
 
@@ -80,6 +128,9 @@ cp functions/mi_funcion/catalyst-config.json.example functions/mi_funcion/cataly
 ```bash
 # Desplegar solo las funciones (lógica de backend)
 catalyst deploy --only functions
+
+# Desplegar funciones y cliente web
+catalyst deploy --only functions,client
 
 # Desplegar todo el proyecto (Client, Functions, AppLogic, Cron)
 catalyst deploy
@@ -169,6 +220,18 @@ Si no hay output, el patrón en `.gitignore` no está haciendo match. Verificar 
 
 ### La función funciona local pero falla en producción
 Las funciones en producción **no leen** el archivo `catalyst-config.json` local. Las variables de entorno deben estar configuradas en la **Consola de Catalyst** → Functions → [nombre] → Environment Variables, con los mismos nombres de clave que están en `env_variables` del `catalyst-config.json.example`.
+
+---
+
+## 🧐 Análisis de Puntos Ciegos
+
+Problemas recurrentes detectados en proyectos anteriores que deben considerarse desde el diseño:
+
+- **Costo de Verificación del Cron:** Aunque el seeder se detenga al llegar a 200 registros, el Cron Job sigue ejecutándose diariamente para realizar el conteo. Implementar una bandera en **Cache** para una validación de "corto circuito" que evite el query innecesario.
+
+- **Expiración de Tokens Push:** La tabla `PushSubscriptions` debe manejar la actualización de tokens. Los tokens inválidos generarán errores silenciosos si no se implementa una lógica de purga tras fallos consecutivos de envío.
+
+- **Dependencia de Créditos de Zia OCR:** El procesamiento de imágenes depende de la disponibilidad de créditos en la cuenta de Catalyst. Monitorear la cuota activamente para evitar interrupciones en el servicio.
 
 ---
 
