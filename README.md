@@ -62,41 +62,33 @@ Esta plantilla define reglas estrictas en `AGENTS.md` para el trabajo de agentes
 
 Crear las siguientes tablas en el **Data Store** de Catalyst antes de ejecutar cualquier función. La plantilla no puede operar correctamente sin ellas.
 
-| Tabla                 | Columna          | Tipo de Dato  | Descripción                                          |
-| :-------------------- | :--------------- | :------------ | :--------------------------------------------------- |
-| **AppData**           | `reference_code` | VarChar (100) | Identificador único del registro.                    |
-|                       | `status`         | VarChar (50)  | Estado del registro (Active, Processed).             |
-|                       | `metadata`       | JSON          | Almacenamiento flexible de metadatos.                |
-| **SystemLogs**        | `event_type`     | VarChar (50)  | Categoría del evento (CRON, OCR, AUTH).              |
-|                       | `payload`        | Text          | Detalle técnico o traza de error.                    |
-| **PushSubscriptions** | `user_id`        | VarChar (100) | Relación con el usuario autenticado.                 |
-|                       | `device_token`   | Text          | Token de registro para notificaciones push.          |
-|                       | `platform`       | VarChar (20)  | Plataforma del dispositivo: Web / iOS / Android.     |
+| Tabla                 | Columna          | Tipo de Dato  | Descripción                                      |
+| :-------------------- | :--------------- | :------------ | :----------------------------------------------- |
+| **AppData**           | `reference_code` | VarChar (100) | Identificador único del registro.                |
+|                       | `status`         | VarChar (50)  | Estado del registro (Active, Processed).         |
+|                       | `metadata`       | JSON          | Almacenamiento flexible de metadatos.            |
+| **SystemLogs**        | `event_type`     | VarChar (50)  | Categoría del evento (CRON, OCR, AUTH).          |
+|                       | `payload`        | Text          | Detalle técnico o traza de error.                |
+| **PushSubscriptions** | `user_id`        | VarChar (100) | Relación con el usuario autenticado.             |
+|                       | `device_token`   | Text          | Token de registro para notificaciones push.      |
+|                       | `platform`       | VarChar (20)  | Plataforma del dispositivo: Web / iOS / Android. |
 
 > Estas tablas se crean manualmente en la Consola de Catalyst → Data Store → Add Table. Ver `architecture/manual_config.md` para la guía detallada.
 
 ## Lógica de Automatización y Servicios
 
-### 1. Data Seeder (Cron Job)
-
-- **Frecuencia:** Ejecución diaria.
-- **Comportamiento:** Genera entre **3 y 8 registros aleatorios** por día en la tabla `AppData`.
-- **Límite:** Al alcanzar **200 registros**, la función se detiene permanentemente.
-- **Notificación:** Envía una **Push Notification** al administrador al detectar que se alcanzó el límite.
-- **Optimización:** Implementar una bandera en **Cache** para validación de corto circuito y evitar el costo de conteo en cada ejecución.
-
-### 2. Optical Character Recognition (Zia OCR)
+### 1. Optical Character Recognition (Zia OCR)
 
 - **Implementación:** Módulo integrado en el cliente (Frontend).
 - **Flujo:** Carga de imagen → Llamada a `Basic Function` → Procesamiento con Zia → Retorno de JSON estructurado.
 
-### 3. ConvoKraft Bot
+### 2. ConvoKraft Bot
 
 - **Nombre preconfigurado:** `MasterAssistantBot`
 - **Gestión:** Configuración de _intents_ y handlers gestionada íntegramente desde el repositorio en `/functions`.
 - **Regla:** Queda prohibida la edición directa del código en la consola web de Catalyst para evitar desincronización con el control de versiones.
 
-### 4. SmartBrowz & Job Scheduling
+### 3. SmartBrowz & Job Scheduling
 
 - **SmartBrowz:** Generación de PDFs y capturas de pantalla de los datos procesados.
 - **Job Scheduling:** Gestión de tareas asíncronas de larga duración para evitar bloqueos en las funciones básicas.
@@ -212,24 +204,31 @@ catalyst init
 ## Troubleshooting
 
 ### `catalyst serve` falla con "Project not found"
+
 Correr `catalyst init` primero para generar `.catalyst/project.json`. Verificar que estás logueado: `catalyst login`.
 
 ### La función retorna `401 Unauthorized` en local
+
 Verificar que `.catalystrc` existe en el directorio home (lo crea `catalyst login`). El SDK lo usa para autenticar localmente. Nunca hacer commit de este archivo.
 
 ### `catalyst deploy` falla con "Runtime not supported"
+
 Revisar `deployment.stack` en el `catalyst-config.json` de cada función — los valores exactos aceptados son: `node20`, `python39`, `java17`. No usar `node18`, `nodejs20`, etc.
 
 ### `catalyst deploy` falla con "socket hang up / Invalid functions"
+
 Trailing comma en algún JSON de configuración. El error se manifiesta en cualquier función, no en la que tiene la coma — revisar todos los JSON con un linter.
 
 ### Función falla en runtime con `Cannot find module './shared/...'`
+
 Falta correr `./scripts/copy-shared.sh` antes del deploy. El CLI no empaqueta directorios padre ni sigue symlinks.
 
 ### Secretos aparecen en `git status`
+
 Correr: `git check-ignore -v functions/*/catalyst-config.json`. Si no hay output, el patrón en `.gitignore` no está haciendo match — verificar que el archivo contiene `**/catalyst-config.json`.
 
 ### La función funciona local pero falla en producción
+
 Las funciones en producción **no leen** el archivo `catalyst-config.json` local. Las variables de entorno deben estar configuradas en la **Consola de Catalyst** → Functions → [nombre] → Environment Variables, con los mismos nombres de clave definidos en `env_variables` del `catalyst-config.json.example`.
 
 ---
