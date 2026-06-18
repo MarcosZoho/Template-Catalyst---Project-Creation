@@ -1,6 +1,12 @@
-# 🧠 Skills & Design System Hierarchy
+# Skills de Diseño y UX — Bibliotecas de Referencia
 
-Este directorio centraliza las capacidades de diseño y UX del proyecto. Para evitar conflictos entre los diferentes frameworks importados, el agente DEBE seguir estrictamente el **Protocolo de Cascada** definido a continuación.
+Este directorio contiene **bibliotecas de referencia** para diseño y UX. Son invocadas manualmente por el agente cuando trabaja en `/client` — **NO se auto-cargan** en cada sesión de Claude Code.
+
+> Para skills auto-cargadas (reducción de tokens, caveman mode), ver `/.agents/skills/`.
+
+---
+
+Para evitar conflictos entre los frameworks importados, el agente DEBE seguir estrictamente el **Protocolo de Cascada** definido a continuación.
 
 ## ⚖️ Jerarquía de Mando (Protocolo de Cascada)
 
@@ -23,7 +29,18 @@ Cuando se genere cualquier elemento de la carpeta `/client`, las skills deben ap
 
 ---
 
-## 🚫 Reglas de Resolución de Conflictos
+## Mapa de Skills
+
+| Carpeta | Propósito | Tipo |
+|---------|-----------|------|
+| `ui-ux-pro-max/` | Estrategia UX: jerarquía de info, flujo de usuario | Referencia + scripts Python |
+| `impeccable/` | Arquitectura: estructura modular y sistema de componentes | Referencia |
+| `taste-skill/` | Estética: tipografía, espacios, colores. Incluye referencia `agent-reference/` para Google Stitch | Referencia |
+| `emil-design-eng/` | Ingeniería de detalle: micro-interacciones, animaciones, pulido | Referencia |
+
+---
+
+## Reglas de Resolución de Conflictos
 
 - **Función > Forma:** Si una mejora de `Taste` o `Emil` oculta o dificulta un flujo definido por `UI-UX Pro Max`, se descarta la mejora estética.
 - **Simplicidad:** En caso de duda, priorizar el minimalismo de `Taste` para evitar sobrecargar el DOM de Catalyst.

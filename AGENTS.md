@@ -14,7 +14,7 @@ El agente debe operar y sugerir soluciones basadas estrictamente en los entornos
 
 ## 🏗️ Reglas de Arquitectura e Inmutabilidad
 
-1. **Inmutabilidad de CLAUDE.md:** El agente tiene **PROHIBIDO** modificar este archivo una vez finalizada la fase de inicialización. Sirve como la fuente de verdad de las reglas de negocio y limitaciones. **CLAUDE.md no es un archivo de memoria comprimible — queda explícitamente excluido como target de `caveman-compress` o cualquier herramienta de reescritura automática.**
+1. **Inmutabilidad de AGENTS.md:** El agente tiene **PROHIBIDO** modificar este archivo una vez finalizada la fase de inicialización. Sirve como la fuente de verdad de las reglas de negocio y limitaciones. **AGENTS.md no es un archivo de memoria comprimible — queda explícitamente excluido como target de `caveman-compress` o cualquier herramienta de reescritura automática.**
 2. **CLI Compliance:** El agente solo gestiona recursos mediante comandos `catalyst` (Functions, Client, Mobile, AppLogic).
 3. **Manual Blueprints:** Para recursos no gestionables vía CLI (QuickML, Circuits, Authentication, API Gateway rules), el agente **DEBE** generar una especificación técnica en `/architecture/manual_config.md` para su implementación manual en la consola web.
 4. **Skills System:** Ubicadas en `/skills/`. Son módulos independientes (ej. frontend, validadores, integraciones de terceros). El agente consume sus interfaces pero no altera su lógica interna a menos que sea explícitamente requerido.
@@ -60,7 +60,7 @@ Comportamientos predefinidos que el agente debe respetar al implementar o modifi
 
 ```text
 /project-root
-├── CLAUDE.md                # Reglas y Gobernanza (Inmutable)
+├── AGENTS.md                # Reglas y Gobernanza (Inmutable)
 ├── catalyst.json.example    # Plantilla del formato real (el real lo genera `catalyst init` y SÍ se commitea)
 ├── .gitignore               # Protección de secretos (Global)
 ├── /functions               # Lógica de backend (Node/Python/Java)
