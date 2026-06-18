@@ -17,6 +17,13 @@ dist
 coverage
 .catalystrc
 
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Generated copies of /shared inside each function (scripts/copy-shared.sh)
+functions/*/shared/
+
 # IDE files
 .vscode
 .vscode/*

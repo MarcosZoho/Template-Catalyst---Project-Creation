@@ -1,6 +1,6 @@
 # 🚀 Zoho Catalyst Master Template (Agnostic & Modular)
 
-Esta es una plantilla profesional y agnóstica para el desarrollo de aplicaciones sobre **Zoho Catalyst**. Diseñada para ser escalable, segura y optimizada para flujos de trabajo asistidos por IA (como Claude/Gemini), utilizando un sistema de **Memory Bank** para la gestión de arquitectura e inmutabilidad de reglas.
+Plantilla profesional y agnóstica para el desarrollo de aplicaciones sobre **Zoho Catalyst**. Diseñada para ser escalable, segura y lista para flujos de trabajo asistidos por agentes de IA, con gobernanza explícita en `AGENTS.md` y un sistema de **Memory Bank** para la gestión de arquitectura.
 
 ## 🏗️ Arquitectura del Proyecto
 
@@ -8,21 +8,27 @@ El repositorio sigue una estructura modular que separa la lógica de negocio, la
 
 ```text
 /
-├── CLAUDE.md                # 🏛️ La "Constitución" del proyecto (Inmutable)
-├── catalyst.json            # ⚙️ Configuración global de recursos de Catalyst
+├── AGENTS.md                # 🏛️ Gobernanza para agentes de IA (Inmutable)
+├── catalyst.json.example    # ⚙️ Plantilla del formato real (el real lo genera `catalyst init`)
 ├── .gitignore               # 🛡️ Protección de secretos y dependencias
 ├── /functions               # ⚡ Microservicios (Node.js 20, Python 3.9, Java 17)
 │   └── /[function_name]
-│       ├── index.js/main.py
+│       ├── index.js/main.py # Esqueleto advancedio con patrón strictScope
 │       ├── package.json
 │       └── catalyst-config.json.example  # 💡 Plantilla de variables de entorno
+├── /shared                  # 📦 Shims y utilidades (wrap-handler, ds-shim, date/streams/email)
+├── /scripts                 # 🔧 copy-shared.sh — copia /shared a cada función pre-deploy
+├── /migrations              # 🗄️ Documentación del esquema del Data Store (*.sql)
+├── /client                  # 🖥️ Frontend — reglas de hosting en client/README.md
 ├── /skills                  # 🧩 Módulos y Habilidades inyectables (Independientes)
 ├── /architecture            # 🧠 Memory Bank & Blueprints
 │   ├── productContext.md    # Propósito y objetivos del proyecto (Agnóstico)
 │   ├── activeContext.md     # Estado actual del runtime y entorno
 │   ├── progress.md          # Checklist de despliegue (CLI vs Manual)
 │   └── manual_config.md     # Guía para recursos No-CLI (Circuits, QuickML)
-└── README.md                # 📖 Guía de inicio rápido
+├── /docs
+│   └── CATALYST_LESSONS_LEARNED.md  # ⚠️ Limitaciones y workarounds de plataforma (lectura obligatoria)
+└── README.md                # 📖 Guía de inicio rápido (este archivo)
 ```
 
 ## 🛡️ Gestión de Seguridad y Secretos
@@ -30,10 +36,11 @@ El repositorio sigue una estructura modular que separa la lógica de negocio, la
 Para evitar la exposición de credenciales y llaves de API en el control de versiones, esta plantilla implementa un sistema de **Shadow Config**:
 
 1. **`.gitignore` Global:** Bloquea automáticamente archivos críticos que nunca deben subir al repositorio:
-   - `**/catalyst-config.json` (Configuración de funciones y llaves de entorno).
-   - `.env` / `.env.local`
-   - `Estructura en Catalyst/` (Exportaciones de infraestructura/IaC).
+   - `functions/**/catalyst-config.json` (Configuración de funciones y llaves de entorno).
+   - `.env` / `.env.local` (nota: Catalyst **ignora** archivos `.env` — las variables viven en `catalyst-config.json` local y en la Consola en producción).
+   - `.catalyst/` (IDs de organización/proyecto generados por `catalyst init`).
    - `.catalystrc` (Identificadores locales de organización).
+   - `functions/*/shared/` (copias generadas por `scripts/copy-shared.sh`).
 2. **Archivos `.example`:** Cada función incluye un `catalyst-config.json.example`. **Debes copiarlo y renombrarlo a `catalyst-config.json`** para colocar tus credenciales reales localmente.
 3. **Validación de Agente:** El agente de IA tiene prohibido sugerir comandos `git add` que incluyan archivos de configuración real.
 
@@ -42,14 +49,14 @@ Para evitar la exposición de credenciales y llaves de API en el control de vers
 - **Autenticación Nativa:** El uso de **Native Catalyst Authentication** es obligatorio para acceder a los módulos de gestión y visualización de datos.
 - **Security Rules:** Se deben configurar reglas de seguridad para restringir el acceso a los endpoints de Zia y la escritura en tablas críticas únicamente a usuarios autenticados.
 
-## 🤖 Protocolo para Agentes de IA (Memory Bank)
+## 🤖 Gobernanza para Agentes de IA
 
-Esta plantilla está optimizada para ser gestionada por un agente de IA bajo reglas estrictas de persistencia:
+Esta plantilla define reglas estrictas en `AGENTS.md` para el trabajo de agentes de IA sobre el proyecto:
 
-1. **Lectura de CLAUDE.md:** El agente asimila las reglas de inmutabilidad y los estándares de código. No puede modificar este archivo tras la inicialización.
+1. **Lectura de AGENTS.md:** El agente asimila las reglas de inmutabilidad y los estándares de código. No puede modificar este archivo tras la inicialización.
 2. **Fase de Planificación:** Antes de escribir código, el agente debe completar los archivos en `/architecture/` para definir el dominio, objetivos y el stack tecnológico.
 3. **Uso de Skills:** Las habilidades en `/skills/` son módulos aislados. El agente consume sus interfaces pero no altera su lógica interna, permitiendo que el humano inyecte componentes de frontend o utilidades sin interferencias.
-4. **Manual Blueprints:** Para servicios que no se crean por CLI (como la configuración visual de **Circuits** o modelos de **QuickML**), el agente debe generar la especificación técnica exacta en `manual_config.md`.
+4. **Manual Blueprints:** Para servicios que no se crean por CLI (como la configuración visual de **Circuits** o modelos de **QuickML**), el agente genera la especificación técnica exacta en `manual_config.md`.
 
 ## 📊 Preconfiguración del Data Store
 
@@ -126,6 +133,10 @@ cp functions/mi_funcion/catalyst-config.json.example functions/mi_funcion/cataly
 ### 4. Despliegue
 
 ```bash
+# SIEMPRE primero: copiar /shared dentro de cada función
+# (el CLI no empaqueta directorios padre ni sigue symlinks)
+./scripts/copy-shared.sh
+
 # Desplegar solo las funciones (lógica de backend)
 catalyst deploy --only functions
 
@@ -172,7 +183,8 @@ git clone <tu-repo-url>
 cd <nombre-del-proyecto>
 catalyst login
 catalyst init
-# Copiar el project_id generado → pegar en catalyst.json
+# `catalyst init` genera catalyst.json (formato de referencia en catalyst.json.example)
+# y el directorio .catalyst/ (git-ignored) con los IDs del proyecto
 ```
 
 ---
@@ -212,7 +224,13 @@ Correr `catalyst init` primero para generar `.catalyst/project.json`. Verificar 
 Verificar que `.catalystrc` existe en tu directorio home (lo crea `catalyst login`). El SDK lo usa para autenticar localmente. Nunca hacer commit de este archivo.
 
 ### `catalyst deploy` falla con "Runtime not supported"
-Revisar `catalyst.json` — los valores exactos aceptados son: `node20`, `python39`, `java17`. No usar `node18`, `nodejs20`, etc.
+Revisar `deployment.stack` en el `catalyst-config.json` de cada función — los valores exactos aceptados son: `node20`, `python39`, `java17`. No usar `node18`, `nodejs20`, etc.
+
+### `catalyst deploy` falla con "socket hang up / Invalid functions"
+Trailing comma en algún JSON de configuración. El error se manifiesta en cualquier función, no en la que tiene la coma — revisar todos los JSON con un linter.
+
+### Función falla en runtime con `Cannot find module './shared/...'`
+Falta correr `./scripts/copy-shared.sh` antes del deploy. El CLI no empaqueta directorios padre ni sigue symlinks.
 
 ### Secretos aparecen en `git status`
 Correr: `git check-ignore -v functions/*/catalyst-config.json`
@@ -235,4 +253,4 @@ Problemas recurrentes detectados en proyectos anteriores que deben considerarse 
 
 ---
 
-_Desarrollado para estandarizar la creación de proyectos robustos, profesionales y asistidos por IA en el ecosistema de Zoho Catalyst._
+_Desarrollado para estandarizar la creación de proyectos robustos y profesionales en el ecosistema de Zoho Catalyst._

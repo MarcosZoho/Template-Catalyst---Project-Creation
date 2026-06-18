@@ -1,0 +1,10 @@
+{
+  "name": "func_name",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.19.2",
+    "zcatalyst-sdk-node": "^3.4.0"
+  }
+}

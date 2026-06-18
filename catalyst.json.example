@@ -1,0 +1,11 @@
+{
+  "_comment": "Formato real de catalyst.json en CLI v1.25.x. El archivo real lo genera `catalyst init` y SÍ se commitea (no contiene secretos). JSON estricto: una trailing comma rompe TODO el deploy con errores engañosos ('socket hang up / Invalid functions').",
+  "_comment_client": "`client` DEBE ser un objeto, NUNCA un array — un array se ignora silenciosamente y el CLI busca un directorio inexistente. Múltiples frontends = subdirectorios dentro de client/ (ej. client/admin/, client/forms/). Eliminar el bloque si no hay frontend.",
+  "functions": {
+    "source": "functions",
+    "targets": ["func_name"]
+  },
+  "client": {
+    "source": "client"
+  }
+}
